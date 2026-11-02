@@ -27,7 +27,13 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px s
 .brand-mark span:nth-child(1) { height: 18px; }
 .brand-mark span:nth-child(2) { height: 27px; }
 .brand-mark span:nth-child(3) { height: 22px; }
-.brand-name { font-family: Manrope, sans-serif; font-size: 24px; font-weight: 800; letter-spacing: -1.2px; line-height: 1; }
+.brand-name { font-family: Manrope, sans-serif; font-size: 24px; font-weight: 800; letter-spacing: -1.2px; line-height: 1; white-space: nowrap; }
+.brand-name small { letter-spacing: 2.2px; }
+.topbar-brand { display:flex; align-items:center; gap:10px; min-width:0; }
+.topbar-brand .brand-mark { height:25px; }
+.topbar-brand .brand-mark span { width:6px; }
+.topbar-brand-name { color:var(--green-900); font-family:Manrope,sans-serif; font-size:20px; font-weight:800; letter-spacing:-.8px; white-space:nowrap; }
+.topbar-brand .breadcrumb { margin-left:16px; padding-left:16px; border-left:1px solid var(--border); }
 .brand-name small { display: block; margin-top: 4px; font-family: 'DM Sans', sans-serif; font-size: 9px; letter-spacing: 4px; font-weight: 700; }
 .workspace-label { padding: 0 13px 13px; color: #9ba8a2; font-size: 9px; letter-spacing: 1.35px; font-weight: 700; }
 .nav-list { display: grid; gap: 5px; }
@@ -317,8 +323,8 @@ body.dark-mode .modal-intro { color: #a2b1a8; }
 .auth-overlay[hidden] { display: none !important; }
 .auth-card { width: min(100%, 460px); padding: clamp(24px, 5vw, 42px); border-radius: 24px; background: var(--panel, #fff); color: var(--text, #1d2924); box-shadow: 0 24px 90px rgba(0,0,0,.24); }
 .auth-brand { display: flex; align-items: center; gap: 12px; margin-bottom: 28px; }
-.auth-brand .brand-name { color: var(--text, #1d2924); font-weight: 800; letter-spacing: .08em; }
-.auth-brand .brand-name small { display: block; font-size: 10px; letter-spacing: .2em; }
+.auth-brand .brand-name { color: var(--text, #1d2924); font-weight: 800; letter-spacing: -.04em; }
+.auth-brand .brand-name small { display: block; font-size: 10px; letter-spacing: .18em; }
 .auth-card h1 { margin: 6px 0 8px; font-size: clamp(27px, 5vw, 34px); }
 .auth-intro { margin: 0 0 24px; color: var(--muted, #6d7772); line-height: 1.5; }
 .auth-card form { display: grid; gap: 10px; }
@@ -358,3 +364,5 @@ body.dark-mode .status-pill.failed { background: #442724; color: #ffd8d3; }
   .incoming-detail { max-width: 46%; }
   .incoming-amount { font-size: 14px; }
 }
+
+@media (max-width:760px) { .topbar-brand .breadcrumb { display:none; } .topbar-brand-name { font-size:18px; } .brand-name { font-size:21px; } }

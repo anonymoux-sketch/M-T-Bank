@@ -1,53 +1,42 @@
-# Secure Personal Banking Dashboard — final-stage starter
+# M&T-style Personal Banking Dashboard Demo — Render-ready package
 
-This package keeps the existing dashboard design, mobile sidebar drawer, and dark/light switch, and adds a PostgreSQL-backed API and secure registration/login flow.
+This is an independent demonstration project. It is **not affiliated with, endorsed by, or connected to M&T Bank**, and it does not access M&T Bank systems or accounts. The original three-bar green mark is retained, with an “M&T Bank” text label beside it throughout the demo UI.
 
-## Included
-- Registration and login with bcrypt password hashes, rate limiting, signed session tokens in HttpOnly/SameSite cookies, and logout.
-- PostgreSQL schema for users, USD accounts, transaction history, and incoming international payments.
-- User-scoped dashboard endpoint; account balances and records are loaded from the database, not hard-coded sample balances.
-- Incoming-payment records include sender name, sender country, sender bank, amount, provider reference, timestamps, and status.
-- Privileged server-to-server import/status endpoints. A payment credits the account only when its status is confirmed as `received`, and duplicate provider references are rejected.
-- Transfer endpoint fails closed until an authorized provider is configured. No UI action falsely reports that funds moved.
-- Responsive dashboard, sidebar toggle, and persistent dark/light theme.
+## Deploy on Render (recommended: deploy the whole app, not GitHub Pages)
 
-## Run locally
-Requires Node.js 20+ and PostgreSQL.
+This repository includes `render.yaml`, which describes one Node web service and one managed PostgreSQL database. The web service serves the frontend and API from the same origin, so the existing `/api/...` sign-up and login requests work without cross-origin cookie configuration.
 
-1. Create a PostgreSQL database, e.g. `mt_dashboard`.
-2. Copy `.env.example` to `.env`; set `DATABASE_URL`, `JWT_SECRET` (a long random value), and `ADMIN_API_KEY`.
-3. Apply the schema: `psql "$DATABASE_URL" -f schema.sql`
-4. Install dependencies: `npm install`
-5. Start: `npm start`
-6. Open `http://localhost:3000`, create an account, and sign in.
+1. Extract this ZIP and create a new GitHub repository, then upload the **contents** of the `mt_bank_dashboard_final` folder to its repository root (including `render.yaml`).
+2. In Render, choose **New → Blueprint**, connect that GitHub repository, and let Render read `render.yaml`.
+3. Review the services and costs shown by Render, then approve creation of the web service and managed PostgreSQL database. The database plan in the blueprint is `basic-256mb`; the web service is `starter`. Render plan availability and prices can change, so check the amounts shown in your account before confirming.
+4. Render creates `DATABASE_URL`, generates `JWT_SECRET` and `ADMIN_API_KEY`, and deploys the Node app. On startup, the app applies `schema.sql` automatically; you do not need to paste SQL manually.
+5. When deployment is healthy, open the **Render web service URL** (the `onrender.com` address), not the old GitHub Pages URL. Create an account there, then sign in.
 
-Use `npm run check` for JavaScript syntax checks. Do not expose the admin API key in frontend code or commit `.env`.
+### Important about GitHub Pages
 
-## Importing an incoming payment (trusted server only)
-The `/api/admin/incoming-payments` endpoint requires the `x-admin-api-key` header. It accepts `accountId`, `providerReference`, `senderName`, `senderCountry`, `senderBank`, `amount`, `status`, and optional `providerPayload`. Only call it from a trusted integration service after validating the payment with your provider. To find a user's account ID, use a secured internal/admin database workflow; do not expose other users' account IDs in the public client.
+GitHub Pages cannot run this Node backend or connect directly to PostgreSQL. You can keep the repository on GitHub as the source, but use the Render web-service URL as the working application. Do not expect the old `https://anonymoux-sketch.github.io/M-T-Bank/` URL to process sign-up or login.
 
-Example request body:
+## What is included
 
-```json
-{
-  "accountId": "ACCOUNT_UUID",
-  "providerReference": "PROVIDER_REFERENCE",
-  "senderName": "Sender Name",
-  "senderCountry": "United Kingdom",
-  "senderBank": "Sender Bank",
-  "amount": "250.00",
-  "status": "pending"
-}
-```
+- Registration and login backed by PostgreSQL; passwords are stored as bcrypt hashes, not plain text.
+- HttpOnly session cookies, rate limiting, and user-scoped account queries.
+- Database tables for users, USD accounts, transactions, and incoming international-payment records.
+- Render Blueprint for the Node web service and managed PostgreSQL database.
+- Automatic, idempotent database schema setup during server startup.
+- Responsive UI, mobile navigation, and persistent light/dark appearance.
 
-Use `PATCH /api/admin/incoming-payments/:id/status` with `{ "status": "received" }` only after the provider confirms settlement. That operation posts the ledger credit once. Do not manually mark payments received based on screenshots, emails, or unverified claims.
+New registrations receive an Everyday Checking account with a zero balance. This is intentional: no real funds are created or represented as available. Any sample figures in the visual design must not be treated as real bank balances.
 
-## Important: real money movement
-The app does **not** yet perform real international transfers. That requires selecting and contracting with a licensed bank/payment institution or authorized platform, completing KYB/KYC/AML and jurisdiction checks, implementing that provider's API and signed webhooks, reconciliation, fraud controls, and production security review. `PAYMENT_PROVIDER=none` is the safe default; the transfer endpoint returns HTTP 503. Merely changing the environment variable does not enable money movement; a provider adapter still needs to be implemented and tested against the chosen provider's official API.
+## Local development
 
-## Production checklist
-- Deploy behind HTTPS and set `NODE_ENV=production` and `COOKIE_SECURE=true`.
-- Use a managed PostgreSQL service, backups, migrations, monitoring, and least-privilege DB credentials.
-- Configure strong secrets in the host's secret manager, not source control.
-- Add email verification, password reset, MFA, audit logs, admin authorization/rotation, fraud review, and account recovery before real customers use it.
-- Replace the current product branding with your own authorized brand. This is not an M&T Bank service and has no connection to M&T Bank systems.
+Requires Node.js 20+ and PostgreSQL. Copy `.env.example` to `.env`, set `DATABASE_URL` and a strong `JWT_SECRET` (at least 32 characters), then run `npm install` and `npm start`. The schema is applied automatically on startup.
+
+## Incoming payment records and transfers
+
+The protected server-to-server `/api/admin/incoming-payments` endpoint can record payment information after a trusted provider confirms it. Keep `ADMIN_API_KEY` private; never put it in browser code or commit it to GitHub. Do not mark a payment received based only on screenshots, emails, or unverified claims.
+
+**Real transfers are not enabled.** The transfer endpoint intentionally returns HTTP 503 until a licensed provider, contractual authorization, identity/compliance checks, signed webhooks, reconciliation, fraud controls, and a reviewed provider integration are implemented. Changing an environment variable alone will not enable money movement.
+
+## Before real-world use
+
+Add email verification, password reset, MFA, audit logging, administrator access controls, monitoring, backups, security review, and jurisdiction-appropriate legal/compliance controls. This package is a prototype starter, not production banking software.

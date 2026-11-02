@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const path = require('path');
+const fs = require('fs');
 const helmet = require('helmet');
 const cookieParser = require('cookie-parser');
 const bcrypt = require('bcryptjs');
@@ -12,7 +13,7 @@ const required = ['DATABASE_URL', 'JWT_SECRET'];
 for (const key of required) if (!process.env[key]) { console.error(`Missing required environment variable: ${key}`); process.exit(1); }
 if (process.env.NODE_ENV === 'production' && process.env.JWT_SECRET.length < 32) { console.error('JWT_SECRET must be at least 32 characters in production.'); process.exit(1); }
 const app = express();
-const pool = new Pool({ connectionString: process.env.DATABASE_URL, ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: true } : undefined });
+const pool = new Pool({ connectionString: process.env.DATABASE_URL, ssl: process.env.DATABASE_SSL === 'true' ? { rejectUnauthorized: false } : undefined });
 const PORT = Number(process.env.PORT || 3000);
 const isProd = process.env.NODE_ENV === 'production';
 const COOKIE_NAME = 'mt_session';
@@ -143,6 +144,13 @@ app.patch('/api/admin/incoming-payments/:id/status', async (req, res) => {
 app.use(express.static(path.join(__dirname, 'public'), { etag: true, maxAge: isProd ? '1h' : 0 }));
 app.get('*', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 app.use((err, _req, res, _next) => { console.error('Unhandled request error:', err.message); res.status(500).json({ error: 'Unexpected server error.' }); });
-const server = app.listen(PORT, () => console.log(`Dashboard server listening on port ${PORT}`));
-async function shutdown() { server.close(); await pool.end(); process.exit(0); }
+async function start() {
+  // Apply the idempotent schema on first boot so a newly provisioned Render database is ready for sign-up.
+  const schema = fs.readFileSync(path.join(__dirname, 'schema.sql'), 'utf8');
+  await pool.query(schema);
+  const server = app.listen(PORT, () => console.log(`Dashboard server listening on port ${PORT}; database schema is ready.`));
+  async function shutdown() { server.close(); await pool.end(); process.exit(0); }
+  process.on('SIGTERM', shutdown); process.on('SIGINT', shutdown);
+}
+start().catch(error => { console.error('Application startup failed; check DATABASE_URL and database access:', error.message); process.exit(1); });
 process.on('SIGTERM', shutdown); process.on('SIGINT', shutdown);
