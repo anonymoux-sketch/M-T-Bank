@@ -2,7 +2,7 @@ services:
   - type: web
     name: mt-bank-dashboard-demo
     runtime: node
-    plan: starter
+    plan: free
     buildCommand: npm install
     startCommand: npm start
     healthCheckPath: /api/health
@@ -28,4 +28,4 @@ databases:
   - name: mt-bank-dashboard-db
     databaseName: mt_dashboard
     user: mt_dashboard_user
-    plan: basic-256mb
+    plan: free
